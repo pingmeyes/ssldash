@@ -1,0 +1,25 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -t rsa ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to aws instance
+      run: |
+        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r * root@54.91.157.146:/var/www/html/ssldash
