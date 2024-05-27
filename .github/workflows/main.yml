@@ -1,25 +1,24 @@
-name: Deploy to GCP VM
+name: Deploy to AWS
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]  # Trigger on pushes to the main branch
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Run the workflow on an Ubuntu runner
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v3  # Checkout your code from GitHub
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh/
-        echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -t rsa ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
-
-    - name: Deploy to aws instance
-      run: |
-        scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r * root@54.91.157.146:/var/www/html/ssldash
+      - name: Deploy to AWS
+        uses: appleboy/ssh-action@v2.1.5  # Use SSH Action to deploy
+        with:
+          host: 54.91.157.146  # Replace with your AWS instance IP
+          username: root  # Since you added the key to root (not recommended)
+          key: ${{ secrets.SSH_KEY }}  # Reference the uploaded SSH key secret
+          port: 22  # Default SSH port
+          script: |  # Deployment commands on the AWS instance
+            sudo cp -r ./ /var/www/html/ssldash/  # Copy files (replace ./ with your source directory if different)
+            sudo chown -R www-data:www-data /var/www/html/ssldash/  # Set ownership for Nginx
+            sudo systemctl restart nginx  # Restart Nginx
