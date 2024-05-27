@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v3  # Checkout your code from GitHub
 
       - name: Deploy to AWS
-        uses: appleboy/ssh-action@v2.1.5  # Use SSH Action to deploy
+        uses: appleboy/ssh-action@v2  # Use SSH Action to deploy (latest version)
         with:
           host: 54.91.157.146  # Replace with your AWS instance IP
           username: root  # Since you added the key to root (not recommended)
