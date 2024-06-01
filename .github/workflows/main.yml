@@ -1,24 +1,22 @@
-name: Deploy to EC2
+name: Deploy to Ubuntu Server
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
-      - name: Deploy to EC2
-        run: |
-          rsync -avz --exclude '.git*' ./ root@54.144.253.55:/var/www/html/ssldash/
-          ssh root@54.144.253.55 'sudo systemctl restart nginx'
+          host: ${{ secrets.SERVER_HOST }}  # Replace with your server's hostname or IP address
+          username: ubuntu  # Adjust if you use a different username
+          key: ${{ secrets.EC2_SSH_KEY }}  # Reference the secret containing your private key
+          script: |
+            cd /var/www/html/ssldash  # Replace with the actual directory on your server
+            sudo git pull origin main
+            # Add your deployment commands here (e.g., npm install, yarn build, etc.)
