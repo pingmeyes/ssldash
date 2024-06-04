@@ -1,33 +1,29 @@
-
-name: Deploy to EC2
+name: Run Command on EC2 Ubuntu 22
 
 on:
+  # Trigger the workflow on push events to the main branch
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  deploy:
+  run-command:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Copy files to EC2
-        uses: easingthemes/ssh-deploy@main
+      - name: Configure SSH access (store privateKey securely)
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          SOURCE: '/'
-          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
-          REMOTE_USER: ${{ secrets.SERVER_USER }}
-          TARGET: ${{ secrets.TARGET_DIR }}
+          # Replace with your actual private key (encrypted using GitHub Actions secrets)
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "$PRIVATE_KEY" | tr -d '\r' > private_key && chmod 600 private_key
 
-      - name: nginx restart
-        uses: appleboy/ssh-action@v1.0.2
+      - name: Run command on EC2 instance
+        uses: JimCronqvist/action-ssh@master
         with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo service nginx restart
+          hosts: ${{ secrets.SERVER_HOST }}  # Replace with your EC2 instance hostname or IP
+          username: ${{ secrets.SERVER_USER }}  # Replace with the username on the EC2 instance (e.g., ubuntu)
+          privateKey: ${{ path.resolve('./private_key') }}
+          command: |  # Replace 'your_command' with the actual command to run
+             git pull
+
