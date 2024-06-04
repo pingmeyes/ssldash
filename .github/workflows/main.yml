@@ -1,22 +1,33 @@
-name: Deploy to Ubuntu
+
+name: Deploy to EC2
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v3
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Copy files to EC2
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          SOURCE: '/'
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          TARGET: ${{ secrets.TARGET_DIR }}
+
+      - name: nginx restart
+        uses: appleboy/ssh-action@v1.0.2
         with:
-          host: ${{ secrets.SERVER_HOST }}  # Store server IP in a secret
-          username: ${{ secrets.SERVER_USER }} # Store username in a secret
-          key: ${{ secrets.EC2_SSH_KEY }}  # Store SSH key as a secret (not recommended)
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /var/www/html/ssldash
-            git pull origin main
-            # Add additional deployment commands here
+            sudo service nginx restart
