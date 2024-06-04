@@ -13,9 +13,9 @@ jobs:
       - name: Deploy to server
         uses: appleboy/ssh-action@v3
         with:
-          host: ${{ secrets.SERVER_IP }}  # Store server IP in a secret
+          host: ${{ secrets.SERVER_HOST }}  # Store server IP in a secret
           username: ${{ secrets.SERVER_USER }} # Store username in a secret
-          key: ${{ secrets.SSH_KEY }}  # Store SSH key as a secret (not recommended)
+          key: ${{ secrets.EC2_SSH_KEY }}  # Store SSH key as a secret (not recommended)
           script: |
             cd /var/www/html/ssldash
             git pull origin main
