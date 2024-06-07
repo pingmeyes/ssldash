@@ -1,29 +1,23 @@
-name: Run Command on EC2 Ubuntu 22
-
 on:
-  # Trigger the workflow on push events to the main branch
   push:
-    branches: [ main ]
-
+    branches:
+      - main
+  workflow_dispatch:
+  
 jobs:
-  run-command:
+  run_pull:
+    name: run pull
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Configure SSH access (store privateKey securely)
-        env:
-          # Replace with your actual private key (encrypted using GitHub Actions secrets)
-          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          echo "$PRIVATE_KEY" | tr -d '\r' > private_key && chmod 600 private_key
-
-      - name: Run command on EC2 instance
-        uses: JimCronqvist/action-ssh@master
-        with:
-          hosts: ${{ secrets.SERVER_HOST }}  # Replace with your EC2 instance hostname or IP
-          username: ${{ secrets.SERVER_USER }}  # Replace with the username on the EC2 instance (e.g., ubuntu)
-          privateKey: ${{ path.resolve('./private_key') }}
-          command: |  # Replace 'your_command' with the actual command to run
-             git pull
-
+    - name: install ssh keys
+      # check this thread to understand why its needed:
+      # https://stackoverflow.com/a/70447517
+      run: |
+        install -m 600 -D /dev/null ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+    - name: connect and pull
+      run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && git checkout ${{ secrets.MAIN_BRANCH }} && git pull && exit"
+    - name: cleanup
+      run: rm -rf ~/.ssh
